@@ -1,0 +1,24 @@
+# Project build directory
+build/
+
+# External libraries
+external/
+
+# Log files
+*.log
+
+# OS-Specific Files
+.DS_Store
+Thumbs.db
+
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+
+# Built object files, libraries, and executables
+*.o
+*.a
+*.so
+*.dll
