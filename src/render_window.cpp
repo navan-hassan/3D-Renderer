@@ -1,5 +1,6 @@
 #include <render_window.hpp>
 #include <iostream>
+#include <debug_utilities.hpp>
 
 void Window::init(int width, int height) {
 	glfwInit();
@@ -20,5 +21,6 @@ void Window::mainLoop() {
 void Window::onDestroy() {
 	glfwDestroyWindow(window);
 	glfwTerminate();
-	std::cout << "Releasing all GLFW resources..." << std::endl;
+
+	debug_write("GLFW window successfully destroyed");
 }
