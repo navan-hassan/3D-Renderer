@@ -1,2 +1,3 @@
 # 3D-Renderer
-A WIP project mostly as a way for me to learn more about graphics programming
+A WIP project for basic real-time rendering with Vulkan.
+This is mostly just an excercise for myself to learn more about 3D graphics programming.
