@@ -1,7 +1,5 @@
 #include <vulkan_context.hpp>
 
-#include <constants.hpp>
-#include <debug_utilities.hpp>
 #include <optional>
 #include <cstring> 
 #include <stdexcept>
@@ -9,11 +7,13 @@
 void VulkanContext::init() {
 
     createInstance();
-
+    
     debug_write("Vulkan context successfully initialized");
 }
 
 void VulkanContext::onDestroy() {
+
+    debugUtilsMessenger.onDestroy(instance, pAllocationCallbacks);
 
     if (instance != nullptr) {
         vkDestroyInstance(instance, pAllocationCallbacks);
@@ -37,15 +37,16 @@ void VulkanContext::createInstance() {
     instanceCreateInfo.enabledExtensionCount = static_cast<uint32_t>(extensionNames.size());
     instanceCreateInfo.ppEnabledExtensionNames = extensionNames.data();
 
-    // TODO: change assignment based on validation layers
-    instanceCreateInfo.enabledLayerCount = 0;
-    instanceCreateInfo.pNext = nullptr;
+    debugUtilsMessenger.init();
 
+    instanceCreateInfo.enabledLayerCount = NUM_VALIDATION_LAYERS;
+    instanceCreateInfo.ppEnabledLayerNames = VALIDATION_LAYERS;
+    instanceCreateInfo.pNext = &debugUtilsMessenger.createInfo;
 
     if (vkCreateInstance(&instanceCreateInfo, pAllocationCallbacks, &instance) != VK_SUCCESS) {
         throw std::runtime_error("ERROR: Failed to create instance!");
     }
-    
+    debugUtilsMessenger.create(instance, pAllocationCallbacks);
 }
 
 VkApplicationInfo VulkanContext::createApplicationInfo() {
@@ -67,7 +68,13 @@ std::vector<const char*> VulkanContext::getRequiredInstanceExtensions() {
     const char** pRequiredExtensionNames;
     pRequiredExtensionNames = glfwGetRequiredInstanceExtensions(&requiredExtensionCount);
 
-    return std::vector<const char*>(pRequiredExtensionNames, pRequiredExtensionNames + requiredExtensionCount);
+    std::vector<const char*> requiredExtensions(pRequiredExtensionNames, pRequiredExtensionNames + requiredExtensionCount);
+
+    if (ENABLE_VALIDATION_LAYERS) {
+        requiredExtensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+    }
+
+    return requiredExtensions;
 }
 
 bool VulkanContext::checkRequiredInstanceExtensions(std::vector<const char*> requiredExtensionNames) {

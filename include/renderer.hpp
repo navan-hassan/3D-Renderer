@@ -7,7 +7,7 @@
 
 // Class that handles logic for rendering on a GLFW window 
 class Renderer {
-public :
+public:
     void run();
     void terminate();
 private:

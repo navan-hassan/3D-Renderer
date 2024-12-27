@@ -2,8 +2,8 @@
 #define RENDER_WINDOW_HPP
 
 #include <GLFW/glfw3.h>
-#include <constants.hpp>
 
+// Wrapper class for interfacing with a GLFW window
 class Window {
 public:
 	void init(int width, int height);

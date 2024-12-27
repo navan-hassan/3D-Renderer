@@ -2,13 +2,10 @@
 #define VULKAN_CONTEXT_HPP
 
 #include <GLFW/glfw3.h>
+#include <debug_utilities.hpp>
 #include <vector>
 
-#ifdef NDEBUG
-constexpr auto ENABLE_VALIDATION_LAYERS = false;
-#else
-constexpr auto ENABLE_VALIDATION_LAYERS = true;
-#endif
+
 
 // Wrapper class to handle interfacing with Vulkan
 class VulkanContext {
@@ -19,6 +16,7 @@ private:
 
     VkInstance instance = nullptr;
     VkAllocationCallbacks* pAllocationCallbacks = nullptr;
+    DebugUtilsMessenger debugUtilsMessenger{};
 
     void createInstance();
     VkApplicationInfo createApplicationInfo();
