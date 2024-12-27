@@ -1,5 +1,5 @@
-#ifndef RENDER_H
-#define RENDER_H
+#ifndef RENDER_HPP
+#define RENDER_HPP
 
 #include <GLFW/glfw3.h>
 
