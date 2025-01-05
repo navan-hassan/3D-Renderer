@@ -3,6 +3,7 @@
 #include <debug_utilities.hpp>
 
 void Window::init(int width, int height) {
+
 	glfwInit();
 
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
@@ -12,6 +13,7 @@ void Window::init(int width, int height) {
 }
 
 void Window::mainLoop() {
+
 	while (!glfwWindowShouldClose(window)) {
 		glfwPollEvents();
 	}
@@ -19,6 +21,7 @@ void Window::mainLoop() {
 }
 
 void Window::onDestroy() {
+
 	glfwDestroyWindow(window);
 	glfwTerminate();
 

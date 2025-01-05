@@ -7,15 +7,20 @@
 void VulkanContext::init() {
 
     createInstance();
+
     
     debug_write("Vulkan context successfully initialized");
+    //selectPhysicalDevice();
 }
 
-void VulkanContext::onDestroy() {
+void VulkanContext::destroy() {
 
-    debugUtilsMessenger.onDestroy(instance, pAllocationCallbacks);
+    debugUtilsMessenger.destroy(instance, pAllocationCallbacks);
+
+    logicalDevice.destroy();
 
     if (instance != nullptr) {
+        vkDestroySurfaceKHR(instance, surface, nullptr);
         vkDestroyInstance(instance, pAllocationCallbacks);
         debug_write("Vulkan instance successfully destroyed");
     }
@@ -47,6 +52,7 @@ void VulkanContext::createInstance() {
         throw std::runtime_error("ERROR: Failed to create instance!");
     }
     debugUtilsMessenger.create(instance, pAllocationCallbacks);
+    //deviceSelector.getPhysicalDevices(&instance);
 }
 
 VkApplicationInfo VulkanContext::createApplicationInfo() {
@@ -98,4 +104,39 @@ bool VulkanContext::checkRequiredInstanceExtensions(std::vector<const char*> req
         }
     }
     return true;
+}
+
+void VulkanContext::selectPhysicalDevice() {
+    if (deviceSelector.deviceCount == 0 && surface != nullptr) {
+        deviceSelector.getPhysicalDevices(&instance, &surface);
+    }
+
+    int selection;
+
+    std::cout << "Select a device from the list: " << std::endl;
+    deviceSelector.printDeviceInfoToScreen();
+
+    std::cin >> selection;
+    std::cin.ignore();
+    if (selection < 0 || selection >= deviceSelector.deviceCount) {
+        std::cout << "INVALID SELECTION: " <<  selection << std::endl;
+        return;
+    }
+
+    selectedDevice = deviceSelector.availablePhysicalDevices.at(selection);
+
+    std::cout << "SELECTED DEVICE " << selection << std::endl;
+    selectedDevice.printDeviceInfo();
+    logicalDevice.initialize(selectedDevice);
+}
+
+
+void VulkanContext::createSurface(GLFWwindow* window) {
+    if (window == nullptr) return;
+
+    if (glfwCreateWindowSurface(instance, window, pAllocationCallbacks, &surface) != VK_SUCCESS) {
+        throw std::runtime_error("failed to create window surface!");
+    }
+
+    debug_write("SUCCESSFULLY CREATED VULKAN SURFACE");
 }

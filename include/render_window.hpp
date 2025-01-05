@@ -11,8 +11,6 @@ public:
 	void mainLoop();
 
 	void onDestroy();
-
-private:
 	GLFWwindow* window = nullptr;
 };
 

@@ -26,8 +26,13 @@ constexpr char* VALIDATION_LAYERS[NUM_VALIDATION_LAYERS] = {
 #endif
 
 
-static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData) {
-    std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
+static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
+    VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, 
+    VkDebugUtilsMessageTypeFlagsEXT messageType, 
+    const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, 
+    void* pUserData
+) {
+    std::cerr << "VALIDATION LAYER: " << pCallbackData->pMessage << std::endl;
 
     return VK_FALSE;
 }
@@ -38,6 +43,7 @@ struct DebugUtilsMessenger {
     VkDebugUtilsMessengerEXT debugMessenger;
 
     void init() {
+
         createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
         createInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT
             | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT
@@ -51,16 +57,16 @@ struct DebugUtilsMessenger {
     }
 
     void create(VkInstance instance, const VkAllocationCallbacks* pAllocator) {
+
         auto createFunction = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(instance, CREATE_DEBUG_UTILS_MESSENGER_FUNC);
 
         if (createFunction != nullptr) {
             createFunction(instance, &createInfo, pAllocator, &debugMessenger);
             debug_write("Debug utils messenger successfully created");
-
         }
     }
 
-    void onDestroy(VkInstance instance, const VkAllocationCallbacks* pAllocator) {
+    void destroy(VkInstance instance, const VkAllocationCallbacks* pAllocator) const {
 
         if (!ENABLE_VALIDATION_LAYERS) return;
 

@@ -4,19 +4,23 @@
 #include <GLFW/glfw3.h>
 #include <debug_utilities.hpp>
 #include <vector>
-
-
+#include <device_selector.hpp>
 
 // Wrapper class to handle interfacing with Vulkan
 class VulkanContext {
 public:
     void init();
-    void onDestroy();
+    void destroy();
+    void selectPhysicalDevice();
+    void createSurface(GLFWwindow* window);
 private:
-
+    DeviceSelector deviceSelector;
     VkInstance instance = nullptr;
     VkAllocationCallbacks* pAllocationCallbacks = nullptr;
     DebugUtilsMessenger debugUtilsMessenger{};
+    PhysicalDevice selectedDevice;
+    LogicalDevice logicalDevice;
+    VkSurfaceKHR surface = VK_NULL_HANDLE;
 
     void createInstance();
     VkApplicationInfo createApplicationInfo();
