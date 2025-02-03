@@ -1,34 +1,17 @@
 #include <vulkan_context.hpp>
-
+#include <debug_utilities.hpp>
 #include <optional>
-#include <cstring> 
 #include <stdexcept>
 
-void VulkanContext::init() {
-
-    createInstance();
-
-    
-    debug_write("Vulkan context successfully initialized");
-    //selectPhysicalDevice();
+VkInstance VulkanContext::getInstance() const {
+    return this->instance;
 }
 
-void VulkanContext::destroy() {
-
-    debugUtilsMessenger.destroy(instance, pAllocationCallbacks);
-
-    logicalDevice.destroy();
-
-    if (instance != nullptr) {
-        vkDestroySurfaceKHR(instance, surface, nullptr);
-        vkDestroyInstance(instance, pAllocationCallbacks);
-        debug_write("Vulkan instance successfully destroyed");
-    }
-    debug_write("Vulkan context successfully destroyed");
+const VkAllocationCallbacks* VulkanContext::getAllocationCallbacks() const {
+    return this->pAllocationCallbacks;
 }
 
-void VulkanContext::createInstance() {
-
+void VulkanContext::createInstance(const VulkanContextInitOptions& initOptions) {
     VkApplicationInfo applicationInfo = createApplicationInfo();
 
     std::vector<const char*> extensionNames = getRequiredInstanceExtensions();
@@ -42,21 +25,26 @@ void VulkanContext::createInstance() {
     instanceCreateInfo.enabledExtensionCount = static_cast<uint32_t>(extensionNames.size());
     instanceCreateInfo.ppEnabledExtensionNames = extensionNames.data();
 
-    debugUtilsMessenger.init();
+    populateDebugMessengerCreateInfo(debugCreateInfo);
 
-    instanceCreateInfo.enabledLayerCount = NUM_VALIDATION_LAYERS;
-    instanceCreateInfo.ppEnabledLayerNames = VALIDATION_LAYERS;
-    instanceCreateInfo.pNext = &debugUtilsMessenger.createInfo;
+    if (ENABLE_VALIDATION_LAYERS) {
+        instanceCreateInfo.enabledLayerCount = static_cast<uint32_t>(initOptions.validationLayers.size());
+        instanceCreateInfo.ppEnabledLayerNames = initOptions.validationLayers.data();
+        instanceCreateInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT*)&debugCreateInfo;
+    }
+    else {
+        instanceCreateInfo.enabledLayerCount = 0;
+        instanceCreateInfo.pNext = nullptr;
+    }
 
     if (vkCreateInstance(&instanceCreateInfo, pAllocationCallbacks, &instance) != VK_SUCCESS) {
         throw std::runtime_error("ERROR: Failed to create instance!");
     }
-    debugUtilsMessenger.create(instance, pAllocationCallbacks);
-    //deviceSelector.getPhysicalDevices(&instance);
+
+    this->debugUtilsMessenger = DebugMessengerFactory::Create(instance, pAllocationCallbacks, debugCreateInfo);
 }
 
 VkApplicationInfo VulkanContext::createApplicationInfo() {
-
     VkApplicationInfo applicationInfo{};
 
     applicationInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
@@ -69,7 +57,6 @@ VkApplicationInfo VulkanContext::createApplicationInfo() {
 }
 
 std::vector<const char*> VulkanContext::getRequiredInstanceExtensions() {
-
     uint32_t requiredExtensionCount = 0;
     const char** pRequiredExtensionNames;
     pRequiredExtensionNames = glfwGetRequiredInstanceExtensions(&requiredExtensionCount);
@@ -84,7 +71,6 @@ std::vector<const char*> VulkanContext::getRequiredInstanceExtensions() {
 }
 
 bool VulkanContext::checkRequiredInstanceExtensions(std::vector<const char*> requiredExtensionNames) {
-
     uint32_t availableExtensionCount = 0;
     vkEnumerateInstanceExtensionProperties(nullptr, &availableExtensionCount, nullptr);
 
@@ -104,39 +90,4 @@ bool VulkanContext::checkRequiredInstanceExtensions(std::vector<const char*> req
         }
     }
     return true;
-}
-
-void VulkanContext::selectPhysicalDevice() {
-    if (deviceSelector.deviceCount == 0 && surface != nullptr) {
-        deviceSelector.getPhysicalDevices(&instance, &surface);
-    }
-
-    int selection;
-
-    std::cout << "Select a device from the list: " << std::endl;
-    deviceSelector.printDeviceInfoToScreen();
-
-    std::cin >> selection;
-    std::cin.ignore();
-    if (selection < 0 || selection >= deviceSelector.deviceCount) {
-        std::cout << "INVALID SELECTION: " <<  selection << std::endl;
-        return;
-    }
-
-    selectedDevice = deviceSelector.availablePhysicalDevices.at(selection);
-
-    std::cout << "SELECTED DEVICE " << selection << std::endl;
-    selectedDevice.printDeviceInfo();
-    logicalDevice.initialize(selectedDevice);
-}
-
-
-void VulkanContext::createSurface(GLFWwindow* window) {
-    if (window == nullptr) return;
-
-    if (glfwCreateWindowSurface(instance, window, pAllocationCallbacks, &surface) != VK_SUCCESS) {
-        throw std::runtime_error("failed to create window surface!");
-    }
-
-    debug_write("SUCCESSFULLY CREATED VULKAN SURFACE");
 }

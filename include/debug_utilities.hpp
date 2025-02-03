@@ -37,13 +37,27 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
     return VK_FALSE;
 }
 
-struct DebugUtilsMessenger {
+class DebugUtilsMessenger {
+public:
+    DebugUtilsMessenger() {}
+    DebugUtilsMessenger(VkInstance instance, const VkAllocationCallbacks* pAllocator, const VkDebugUtilsMessengerCreateInfoEXT& createInfo)
+        :instance(instance), pAllocator(pAllocator)
+    {
+        auto createFunction = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(instance, CREATE_DEBUG_UTILS_MESSENGER_FUNC);
 
-    VkDebugUtilsMessengerCreateInfoEXT createInfo{};
-    VkDebugUtilsMessengerEXT debugMessenger;
+        if (createFunction != nullptr) {
+            createFunction(instance, &createInfo, pAllocator, &debugMessenger);
+            debug_write("Debug utils messenger successfully created");
+        }
+    }
+
+    ~DebugUtilsMessenger() {
+        if (debugMessenger != VK_NULL_HANDLE) {
+            destroy();
+        }
+    }
 
     void init() {
-
         createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
         createInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT
             | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT
@@ -57,7 +71,6 @@ struct DebugUtilsMessenger {
     }
 
     void create(VkInstance instance, const VkAllocationCallbacks* pAllocator) {
-
         auto createFunction = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(instance, CREATE_DEBUG_UTILS_MESSENGER_FUNC);
 
         if (createFunction != nullptr) {
@@ -66,17 +79,41 @@ struct DebugUtilsMessenger {
         }
     }
 
-    void destroy(VkInstance instance, const VkAllocationCallbacks* pAllocator) const {
-
+    void destroy() {
         if (!ENABLE_VALIDATION_LAYERS) return;
+        if (destroyed) return;
 
         auto destroyFunction = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(instance, DESTROY_DEBUG_UTILS_MESSENGER_FUNC);
 
         if (destroyFunction != nullptr) {
             destroyFunction(instance, debugMessenger, pAllocator);
             debug_write("Debug utils messenger successfully destroyed");
+            destroyed = true;
         }
     }
+    VkDebugUtilsMessengerCreateInfoEXT createInfo{};
+private:
+    bool destroyed = false;
+    VkInstance instance = VK_NULL_HANDLE;
+    VkDebugUtilsMessengerEXT debugMessenger = VK_NULL_HANDLE;
+    const VkAllocationCallbacks* pAllocator = VK_NULL_HANDLE;
 };
+
+struct DebugMessengerFactory {
+    static std::shared_ptr<DebugUtilsMessenger> Create(VkInstance parentInstance, const VkAllocationCallbacks* pAllocator, const VkDebugUtilsMessengerCreateInfoEXT& createInfo) {
+        if (!ENABLE_VALIDATION_LAYERS) return VK_NULL_HANDLE;
+
+        std::shared_ptr<DebugUtilsMessenger> debugUtilsMessenger = std::shared_ptr<DebugUtilsMessenger>(new DebugUtilsMessenger(parentInstance, pAllocator, createInfo));
+        return debugUtilsMessenger;
+    }
+};
+
+static void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo) {
+    createInfo = {};
+    createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+    createInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+    createInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
+    createInfo.pfnUserCallback = debugCallback;
+}
 
 #endif
