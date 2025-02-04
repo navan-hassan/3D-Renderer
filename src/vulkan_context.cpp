@@ -12,6 +12,8 @@ const VkAllocationCallbacks* VulkanContext::getAllocationCallbacks() const {
 }
 
 void VulkanContext::createInstance(const VulkanContextInitOptions& initOptions) {
+    enableValidationLayers = initOptions.enableValidationLayers;
+
     VkApplicationInfo applicationInfo = createApplicationInfo();
 
     std::vector<const char*> extensionNames = getRequiredInstanceExtensions();
@@ -25,9 +27,8 @@ void VulkanContext::createInstance(const VulkanContextInitOptions& initOptions) 
     instanceCreateInfo.enabledExtensionCount = static_cast<uint32_t>(extensionNames.size());
     instanceCreateInfo.ppEnabledExtensionNames = extensionNames.data();
 
-    populateDebugMessengerCreateInfo(debugCreateInfo);
-
-    if (ENABLE_VALIDATION_LAYERS) {
+    if (enableValidationLayers) {
+        populateDebugMessengerCreateInfo(debugCreateInfo);
         instanceCreateInfo.enabledLayerCount = static_cast<uint32_t>(initOptions.validationLayers.size());
         instanceCreateInfo.ppEnabledLayerNames = initOptions.validationLayers.data();
         instanceCreateInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT*)&debugCreateInfo;
@@ -41,7 +42,9 @@ void VulkanContext::createInstance(const VulkanContextInitOptions& initOptions) 
         throw std::runtime_error("ERROR: Failed to create instance!");
     }
 
-    this->debugUtilsMessenger = DebugMessengerFactory::Create(instance, pAllocationCallbacks, debugCreateInfo);
+    if (enableValidationLayers) {
+        this->debugUtilsMessenger = DebugMessengerFactory::Create(instance, pAllocationCallbacks, debugCreateInfo);
+    }
 }
 
 VkApplicationInfo VulkanContext::createApplicationInfo() {
@@ -63,7 +66,7 @@ std::vector<const char*> VulkanContext::getRequiredInstanceExtensions() {
 
     std::vector<const char*> requiredExtensions(pRequiredExtensionNames, pRequiredExtensionNames + requiredExtensionCount);
 
-    if (ENABLE_VALIDATION_LAYERS) {
+    if (enableValidationLayers) {
         requiredExtensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
     }
 

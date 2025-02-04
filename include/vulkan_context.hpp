@@ -3,11 +3,14 @@
 
 #include <memory>
 #include <vector>
+
+#define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
 #include <debug_utilities.hpp>
 
 struct VulkanContextInitOptions {
+    bool enableValidationLayers = false;
     std::vector<const char*> validationLayers;
 };
 
@@ -36,8 +39,9 @@ public:
     VkInstance getInstance() const;
     const VkAllocationCallbacks* getAllocationCallbacks() const;
 private:
+    bool enableValidationLayers = false;
     VkInstance instance = VK_NULL_HANDLE;
-    VkAllocationCallbacks* pAllocationCallbacks = nullptr;
+    VkAllocationCallbacks* pAllocationCallbacks = VK_NULL_HANDLE;
     std::shared_ptr<DebugUtilsMessenger> debugUtilsMessenger = VK_NULL_HANDLE;
     VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo{};
     void createInstance(const VulkanContextInitOptions& initOptions);
