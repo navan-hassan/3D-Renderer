@@ -8,19 +8,24 @@
 #include <window.hpp>
 
 struct SwapChainCreationInfo {
-	VkPresentModeKHR vkPresentModeKHR;
+	VkPresentModeKHR presentMode;
 	VkSurfaceFormatKHR surfaceFormat;
+	VkSurfaceKHR surface;
+	FramebufferDimensions framebufferDimensions;
 };
 
 class SwapChain {
 public:
-	SwapChain(std::shared_ptr<VulkanContext> pVkContext, std::shared_ptr<Window> pWindow, std::shared_ptr<LogicalDevice> pLogicalDevice, const SwapChainCreationInfo& creationInfo);
+	SwapChain(std::shared_ptr<VulkanContext> pVkContext, std::shared_ptr<LogicalDevice> pLogicalDevice);
 	~SwapChain();
+	void createImageViews();
+	VkResult init(const SwapChainCreationInfo& creationInfo);
 private:
 	std::shared_ptr<VulkanContext> pVkContext;
 	std::shared_ptr<LogicalDevice> pLogicalDevice;
-	std::shared_ptr<Window> pWindow;
+	//std::shared_ptr<Window> pWindow;
 	std::vector<VkImage> swapChainImages;
+	std::vector<VkImageView> swapChainImageViews;
 	VkFormat swapChainImageFormat;
 	VkExtent2D swapChainExtent;
 	VkSwapchainKHR swapChain = VK_NULL_HANDLE;

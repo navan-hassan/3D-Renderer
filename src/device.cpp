@@ -130,7 +130,7 @@ std::shared_ptr<LogicalDevice> DeviceFactory::Create(const std::shared_ptr<Vulka
 
     deviceInterfaceCreationInfo.requestedDeviceExtensions = deviceSelectionInfo.requestedDeviceExtensions;
 
-    std::shared_ptr<LogicalDevice> logicalDevice = std::shared_ptr<LogicalDevice>(new LogicalDevice(pVkContext, deviceInterfaceCreationInfo));
+    std::shared_ptr<LogicalDevice> logicalDevice = std::make_shared<LogicalDevice>(pVkContext, deviceInterfaceCreationInfo);
     return logicalDevice;
 }
 

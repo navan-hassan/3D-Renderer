@@ -11,12 +11,18 @@
 class Renderer {
 public:
 	Renderer(const std::shared_ptr<VulkanContext> pVkContext);
+	VkResult init();
 	void run();
+
 private:
-	std::shared_ptr<VulkanContext> pVkContext;
-	std::shared_ptr<Window> pWindow;
+	std::shared_ptr<VulkanContext> pVkContext = nullptr;
 	std::shared_ptr<LogicalDevice> pLogicalDevice;
-	std::shared_ptr<SwapChain> pSwapChain;
+	std::unique_ptr<Window> pWindow;
+	std::unique_ptr<SwapChain> pSwapChain;
+
+	VkResult createDevice();
+	VkResult createSwapChain();
+	VkResult buildPipeline();
 };
 
 #endif

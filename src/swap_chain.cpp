@@ -1,35 +1,55 @@
 #include <swap_chain.hpp>
 
-SwapChain::SwapChain(std::shared_ptr<VulkanContext> pVkContext, std::shared_ptr<Window> pWindow, std::shared_ptr<LogicalDevice> pLogicalDevice, const SwapChainCreationInfo& creationInfo)
-	: pVkContext(pVkContext), pWindow(pWindow), pLogicalDevice(pLogicalDevice) {
+SwapChain::SwapChain(std::shared_ptr<VulkanContext> pVkContext, std::shared_ptr<LogicalDevice> pLogicalDevice)
+	: pVkContext(pVkContext), pLogicalDevice(pLogicalDevice) {
+	
+}
+
+SwapChain::~SwapChain() {
+
+	VkDevice logicaldevice = pLogicalDevice->getHandle();
+	const VkAllocationCallbacks* pAllocationCallbacks = pVkContext->getAllocationCallbacks();
+	for (auto imageView : swapChainImageViews) {
+		vkDestroyImageView(logicaldevice, imageView, pAllocationCallbacks);
+	}
+	debug_write("Successfully destroyed image views");
+
+
+	if (swapChain == VK_NULL_HANDLE) return;
+
+	vkDestroySwapchainKHR(logicaldevice, swapChain, pAllocationCallbacks);
+	debug_write("Successfully destroyed swap chain");
+}
+
+VkResult SwapChain::init(const SwapChainCreationInfo& creationInfo) {
 	VkPhysicalDevice physicalDevice = pLogicalDevice->getPhysicalDevice();
 
 	VkSurfaceCapabilitiesKHR surfaceCapabilities;
 	std::vector<VkSurfaceFormatKHR> surfaceFormats;
 	std::vector<VkPresentModeKHR> presentModes;
-	VkSurfaceKHR surface = pWindow->getSurface();
-	vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, surface, &surfaceCapabilities);
+	//VkSurfaceKHR surface = pWindow->getSurface();
+	vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, creationInfo.surface, &surfaceCapabilities);
 
 	uint32_t imageCount = surfaceCapabilities.minImageCount + 1;
 	if (surfaceCapabilities.maxImageCount > 0 && imageCount > surfaceCapabilities.maxImageCount) {
 		imageCount = surfaceCapabilities.maxImageCount;
 	}
-	
-	VkSwapchainCreateInfoKHR createInfo{};
-	createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-	createInfo.surface = surface;
 
-	createInfo.minImageCount = imageCount;
+	VkSwapchainCreateInfoKHR vkSwapChainCreateInfo{};
+	vkSwapChainCreateInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+	vkSwapChainCreateInfo.surface = creationInfo.surface;
 
-	VkSurfaceFormatKHR surfaceFormat = selectSurfaceFormat(physicalDevice, creationInfo.surfaceFormat, surface);
-	FramebufferDimensions framebufferDimensions = pWindow->getFramebufferSize();
-	swapChainExtent = setSwapExtent(surfaceCapabilities, static_cast<uint32_t>(framebufferDimensions.width), static_cast<uint32_t>(framebufferDimensions.height), surface, physicalDevice);
+	vkSwapChainCreateInfo.minImageCount = imageCount;
 
-	createInfo.imageFormat = surfaceFormat.format;
-	createInfo.imageColorSpace = surfaceFormat.colorSpace;
-	createInfo.imageExtent = swapChainExtent;
-	createInfo.imageArrayLayers = 1;
-	createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+	VkSurfaceFormatKHR surfaceFormat = selectSurfaceFormat(physicalDevice, creationInfo.surfaceFormat, creationInfo.surface);
+	//FramebufferDimensions framebufferDimensions = pWindow->getFramebufferSize();
+	swapChainExtent = setSwapExtent(surfaceCapabilities, static_cast<uint32_t>(creationInfo.framebufferDimensions.width), static_cast<uint32_t>(creationInfo.framebufferDimensions.height), creationInfo.surface, physicalDevice);
+
+	vkSwapChainCreateInfo.imageFormat = surfaceFormat.format;
+	vkSwapChainCreateInfo.imageColorSpace = surfaceFormat.colorSpace;
+	vkSwapChainCreateInfo.imageExtent = swapChainExtent;
+	vkSwapChainCreateInfo.imageArrayLayers = 1;
+	vkSwapChainCreateInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
 	QueueFamilyIndex queueFamilies = pLogicalDevice->getQueueFamilies();
 
@@ -39,28 +59,29 @@ SwapChain::SwapChain(std::shared_ptr<VulkanContext> pVkContext, std::shared_ptr<
 	};
 
 	if (queueFamilies.graphics != queueFamilies.presentation) {
-		createInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
-		createInfo.queueFamilyIndexCount = 2;
-		createInfo.pQueueFamilyIndices = queueFamilyIndices;
+		vkSwapChainCreateInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
+		vkSwapChainCreateInfo.queueFamilyIndexCount = 2;
+		vkSwapChainCreateInfo.pQueueFamilyIndices = queueFamilyIndices;
 	}
 	else {
-		createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+		vkSwapChainCreateInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
 	}
 
-	createInfo.preTransform = surfaceCapabilities.currentTransform;
-	createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+	vkSwapChainCreateInfo.preTransform = surfaceCapabilities.currentTransform;
+	vkSwapChainCreateInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
 
-	createInfo.presentMode = (hasRequestedPresentMode(physicalDevice, creationInfo.vkPresentModeKHR, surface))
-		? creationInfo.vkPresentModeKHR : VK_PRESENT_MODE_FIFO_KHR;
+	vkSwapChainCreateInfo.presentMode = (hasRequestedPresentMode(physicalDevice, creationInfo.presentMode, creationInfo.surface))
+		? creationInfo.presentMode : VK_PRESENT_MODE_FIFO_KHR;
 
-	createInfo.clipped = VK_TRUE;
-	createInfo.oldSwapchain = VK_NULL_HANDLE;
+	vkSwapChainCreateInfo.clipped = VK_TRUE;
+	vkSwapChainCreateInfo.oldSwapchain = VK_NULL_HANDLE;
 
 	const VkAllocationCallbacks* pAllocationCallbacks = pVkContext->getAllocationCallbacks();
 	VkDevice logicaldevice = pLogicalDevice->getHandle();
 
-	if (vkCreateSwapchainKHR(logicaldevice, &createInfo, pAllocationCallbacks, &swapChain) != VK_SUCCESS) {
-		throw std::runtime_error("failed to create swap chain!");
+	if (vkCreateSwapchainKHR(logicaldevice, &vkSwapChainCreateInfo, pAllocationCallbacks, &swapChain) != VK_SUCCESS) {
+		debug_write("failed to create swap chain!");
+		return VK_ERROR_INITIALIZATION_FAILED;
 	}
 
 	vkGetSwapchainImagesKHR(logicaldevice, swapChain, &imageCount, nullptr);
@@ -70,16 +91,33 @@ SwapChain::SwapChain(std::shared_ptr<VulkanContext> pVkContext, std::shared_ptr<
 	swapChainImageFormat = surfaceFormat.format;
 
 	debug_write("Successfully created swap chain");
+	createImageViews();
+	return VK_SUCCESS;
 }
 
-SwapChain::~SwapChain() {
-	if (swapChain == VK_NULL_HANDLE) return;
-
-	VkDevice logicaldevice = pLogicalDevice->getHandle();
-	const VkAllocationCallbacks* pAllocationCallbacks = pVkContext->getAllocationCallbacks();
-
-	vkDestroySwapchainKHR(logicaldevice, swapChain, pAllocationCallbacks);
-	debug_write("Successfully destroyed swap chain");
+void SwapChain::createImageViews() {
+	swapChainImageViews.resize(swapChainImages.size());
+	
+	for (size_t i = 0; i < swapChainImages.size(); i++) {
+		VkImageViewCreateInfo createInfo{};
+		createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+		createInfo.image = swapChainImages[i];
+		createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+		createInfo.format = swapChainImageFormat;
+		createInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+		createInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+		createInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+		createInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+		createInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		createInfo.subresourceRange.baseMipLevel = 0;
+		createInfo.subresourceRange.levelCount = 1;
+		createInfo.subresourceRange.baseArrayLayer = 0;
+		createInfo.subresourceRange.layerCount = 1;
+		if (vkCreateImageView(pLogicalDevice->getHandle(), &createInfo, nullptr, &swapChainImageViews[i]) != VK_SUCCESS) {
+			throw std::runtime_error("failed to create image views!");
+		}
+	}
+	debug_write("Successfully created image views");
 }
 
 bool SwapChain::hasRequestedPresentMode(const VkPhysicalDevice& physicalDevice, const VkPresentModeKHR& requestedPresentMode, const VkSurfaceKHR& surface) {
