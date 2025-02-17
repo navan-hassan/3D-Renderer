@@ -1,7 +1,6 @@
 #ifndef DEVICE_HPP
 #define DEVICE_HPP
 
-#include <GLFW/glfw3.h>
 #include <vector>
 #include <optional>
 #include <string>

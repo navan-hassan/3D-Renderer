@@ -7,17 +7,16 @@
 #include <device.hpp>
 #include <swap_chain.hpp>
 
-// Class that handles logic for rendering on a GLFW window 
 class Renderer {
 public:
-	Renderer(const std::shared_ptr<VulkanContext> pVkContext);
+	Renderer(const std::shared_ptr<VulkanContext> pVkContext, std::shared_ptr<Window> pWindow);
 	VkResult init();
 	void run();
 
 private:
 	std::shared_ptr<VulkanContext> pVkContext = nullptr;
 	std::shared_ptr<LogicalDevice> pLogicalDevice;
-	std::unique_ptr<Window> pWindow;
+	std::shared_ptr<Window> pWindow;
 	std::unique_ptr<SwapChain> pSwapChain;
 
 	VkResult createDevice();

@@ -1,9 +1,9 @@
 #ifndef SWAP_CHAIN_HPP
 #define SWAP_CHAIN_HPP
-#include <GLFW/glfw3.h>
-#include <vector>
-#include <algorithm>
 
+#include <vector>
+
+#include <vulkan_context.hpp>
 #include <device.hpp>
 #include <window.hpp>
 
@@ -26,8 +26,8 @@ private:
 	//std::shared_ptr<Window> pWindow;
 	std::vector<VkImage> swapChainImages;
 	std::vector<VkImageView> swapChainImageViews;
-	VkFormat swapChainImageFormat;
-	VkExtent2D swapChainExtent;
+	VkFormat swapChainImageFormat = VK_FORMAT_UNDEFINED;
+	VkExtent2D swapChainExtent{};
 	VkSwapchainKHR swapChain = VK_NULL_HANDLE;
 	
 	static bool hasRequestedPresentMode(const VkPhysicalDevice& physicalDevice, const VkPresentModeKHR& requestedPresentMode, const VkSurfaceKHR& surface);

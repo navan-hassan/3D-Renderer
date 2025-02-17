@@ -1,20 +1,18 @@
-#include <renderer.hpp>
 #include <cstdlib>
 
-int main() {
-	VulkanContextInitOptions vkContextInitOptions{};
-	vkContextInitOptions.enableValidationLayers = true;
-	vkContextInitOptions.validationLayers.push_back("VK_LAYER_KHRONOS_validation");
-	
-	std::shared_ptr<VulkanContext> vkContext = std::make_shared<VulkanContext>(vkContextInitOptions);
-	Renderer renderer = Renderer::Renderer(vkContext);
+#include <engine.hpp>
+#include <logging_utilities.hpp>
 
-	if (renderer.init() != VK_SUCCESS) {
-		debug_write("FAILED TO INITIALIZE RENDERER!");
+int main() {
+
+	Engine engine = Engine::Engine();
+	bool enableDebugMode = true;
+	if (engine.init(enableDebugMode) == false) {
+		logging::ERROR("FAILED TO INITIALIZE ENGINE");
 		return EXIT_FAILURE;
 	}
-	//renderer.init();
-	renderer.run();
+
+	engine.eventLoop();
 
 	return EXIT_SUCCESS;
 }

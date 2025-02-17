@@ -4,10 +4,8 @@
 #include <memory>
 #include <vector>
 
-#define GLFW_INCLUDE_VULKAN
-#include <GLFW/glfw3.h>
-
-#include <debug_utilities.hpp>
+#include <glfw_context.hpp>
+#include <debug_utils_messenger.hpp>
 
 struct VulkanContextInitOptions {
     bool enableValidationLayers = false;
@@ -17,37 +15,21 @@ struct VulkanContextInitOptions {
 // Wrapper class to handle interfacing with Vulkan
 class VulkanContext {
 public:
-    VulkanContext(const VulkanContextInitOptions& initOptions) {
-        glfwInit();
-        createInstance(initOptions);
-        debug_write("Vulkan context successfully created");
-    }
-
-    ~VulkanContext() {
-        if (this->debugUtilsMessenger != VK_NULL_HANDLE) {
-            this->debugUtilsMessenger->~DebugUtilsMessenger();
-        }
-
-        if (instance != VK_NULL_HANDLE) {
-            vkDestroyInstance(instance, pAllocationCallbacks);
-            debug_write("Vulkan instance successfully destroyed");
-        }
-        glfwTerminate();
-        debug_write("Vulkan context successfully destroyed");
-    }
-
+    VulkanContext(const VulkanContextInitOptions& initOptions, std::shared_ptr<GLFWContext> glfwContext);
+    ~VulkanContext();
     VkInstance getInstance() const;
     const VkAllocationCallbacks* getAllocationCallbacks() const;
 private:
     bool enableValidationLayers = false;
     VkInstance instance = VK_NULL_HANDLE;
     VkAllocationCallbacks* pAllocationCallbacks = VK_NULL_HANDLE;
-    std::shared_ptr<DebugUtilsMessenger> debugUtilsMessenger = VK_NULL_HANDLE;
-    VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo{};
+    std::unique_ptr<DebugUtilsMessenger> debugUtilsMessenger = VK_NULL_HANDLE;
+    std::shared_ptr<GLFWContext> glfwContext;
     void createInstance(const VulkanContextInitOptions& initOptions);
-    VkApplicationInfo createApplicationInfo();
-    std::vector<const char*> getRequiredInstanceExtensions();
-    bool checkRequiredInstanceExtensions(std::vector<const char*> requiredExtensionNames);
+    static VkApplicationInfo createApplicationInfo();
+    std::vector<const char*> getRequiredInstanceExtensions() const;
+    bool checkRequiredInstanceExtensions(const std::vector<const char*>& requiredExtensionNames) const;
+
 };
 
 #endif

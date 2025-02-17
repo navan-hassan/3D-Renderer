@@ -1,7 +1,26 @@
 #include <vulkan_context.hpp>
-#include <debug_utilities.hpp>
+#include <logging_utilities.hpp>
+#include <constants.hpp>
+
 #include <optional>
 #include <stdexcept>
+
+VulkanContext::VulkanContext(const VulkanContextInitOptions& initOptions, std::shared_ptr<GLFWContext> glfwContext)
+    : glfwContext(glfwContext) {
+    createInstance(initOptions);
+    logging::DEBUG("SUCCESSFULLY CREATED VULKAN CONTEXT");
+}
+
+VulkanContext::~VulkanContext() {
+    if (this->debugUtilsMessenger != VK_NULL_HANDLE) {
+        this->debugUtilsMessenger->destroy();
+    }
+
+    if (instance != VK_NULL_HANDLE) {
+        vkDestroyInstance(instance, pAllocationCallbacks);
+    }
+    logging::DEBUG("SUCCESSFULLY DESTROYED VULKAN CONTEXT");
+}
 
 VkInstance VulkanContext::getInstance() const {
     return this->instance;
@@ -27,8 +46,11 @@ void VulkanContext::createInstance(const VulkanContextInitOptions& initOptions) 
     instanceCreateInfo.enabledExtensionCount = static_cast<uint32_t>(extensionNames.size());
     instanceCreateInfo.ppEnabledExtensionNames = extensionNames.data();
 
+    VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo{};
+
     if (enableValidationLayers) {
-        populateDebugMessengerCreateInfo(debugCreateInfo);
+        debugCreateInfo = DebugUtilsMessenger::getDebugUtilsMessengerCreateInfo();
+        //DebugUtilsMessenger::populateDebugMessengerCreateInfo(debugCreateInfo);
         instanceCreateInfo.enabledLayerCount = static_cast<uint32_t>(initOptions.validationLayers.size());
         instanceCreateInfo.ppEnabledLayerNames = initOptions.validationLayers.data();
         instanceCreateInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT*)&debugCreateInfo;
@@ -43,7 +65,7 @@ void VulkanContext::createInstance(const VulkanContextInitOptions& initOptions) 
     }
 
     if (enableValidationLayers) {
-        this->debugUtilsMessenger = DebugMessengerFactory::Create(instance, pAllocationCallbacks, debugCreateInfo);
+        this->debugUtilsMessenger = std::make_unique<DebugUtilsMessenger>(instance, pAllocationCallbacks, debugCreateInfo);
     }
 }
 
@@ -51,20 +73,16 @@ VkApplicationInfo VulkanContext::createApplicationInfo() {
     VkApplicationInfo applicationInfo{};
 
     applicationInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
-    applicationInfo.pApplicationName = APPLICATION_NAME;
+    applicationInfo.pApplicationName = constants::APPLICATION_NAME;
     applicationInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
-    applicationInfo.pEngineName = ENGINE_NAME;
+    applicationInfo.pEngineName = constants::ENGINE_NAME;
     applicationInfo.apiVersion = VK_API_VERSION_1_0;
 
     return applicationInfo;
 }
 
-std::vector<const char*> VulkanContext::getRequiredInstanceExtensions() {
-    uint32_t requiredExtensionCount = 0;
-    const char** pRequiredExtensionNames;
-    pRequiredExtensionNames = glfwGetRequiredInstanceExtensions(&requiredExtensionCount);
-
-    std::vector<const char*> requiredExtensions(pRequiredExtensionNames, pRequiredExtensionNames + requiredExtensionCount);
+std::vector<const char*> VulkanContext::getRequiredInstanceExtensions() const {
+    std::vector<const char*> requiredExtensions = glfwContext->getRequiredInstanceExtensions();
 
     if (enableValidationLayers) {
         requiredExtensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
@@ -73,19 +91,19 @@ std::vector<const char*> VulkanContext::getRequiredInstanceExtensions() {
     return requiredExtensions;
 }
 
-bool VulkanContext::checkRequiredInstanceExtensions(std::vector<const char*> requiredExtensionNames) {
+bool VulkanContext::checkRequiredInstanceExtensions(const std::vector<const char*>& requiredExtensionNames) const {
     uint32_t availableExtensionCount = 0;
     vkEnumerateInstanceExtensionProperties(nullptr, &availableExtensionCount, nullptr);
 
     std::vector<VkExtensionProperties> availableExtensionNames(availableExtensionCount);
     vkEnumerateInstanceExtensionProperties(nullptr, &availableExtensionCount, availableExtensionNames.data());
 
-    for (const auto& extensionName : requiredExtensionNames) {
+    for (const auto& requiredExtensionName : requiredExtensionNames) {
         bool isFound = std::find_if(
             availableExtensionNames.begin(),
             availableExtensionNames.end(),
-            [extensionName](const VkExtensionProperties& extensionProperties) {
-                return std::strcmp(extensionProperties.extensionName, extensionName) == 0;
+            [requiredExtensionName](const VkExtensionProperties& extensionProperties) {
+                return std::strcmp(extensionProperties.extensionName, requiredExtensionName) == 0;
             }) != availableExtensionNames.end();
 
         if (!isFound) {

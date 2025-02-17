@@ -1,17 +1,19 @@
 #include <window.hpp>
+#include <constants.hpp>
+#include <logging_utilities.hpp>
 
 #include <stdexcept>
 
-#include <constants.hpp>
-#include <debug_utilities.hpp>
+static constexpr size_t DEFAULT_WIDTH = 800;
+static constexpr size_t DEFAULT_HEIGHT = 600;
 
-Window::Window(const std::shared_ptr<VulkanContext> pVkContext)
-	: pVkContext(pVkContext) {
+WindowCreationInfo::WindowCreationInfo()
+	: title(constants::WINDOW_TITLE), width(DEFAULT_WIDTH), height(DEFAULT_HEIGHT) {}
+
+Window::Window(const std::shared_ptr<VulkanContext> pVkContext, std::shared_ptr<GLFWContext> pGLFWContext)
+	: pVkContext(pVkContext), pGLFWContext(pGLFWContext) {
 	WindowCreationInfo windowCreationInfo{};
 
-	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
-
 	handle = glfwCreateWindow(
 		windowCreationInfo.width,
 		windowCreationInfo.height,
@@ -20,6 +22,12 @@ Window::Window(const std::shared_ptr<VulkanContext> pVkContext)
 		nullptr
 	);
 
+	if (handle == NULL) {
+		throw std::runtime_error("failed to create GLFW window!");
+	}
+	logging::DEBUG("SUCCESSFULLY CREATED GLFW WINDOW");
+
+
 	VkInstance instance = pVkContext->getInstance();
 	const VkAllocationCallbacks* pAllocationCallbacks = pVkContext->getAllocationCallbacks();
 	VkSurfaceKHR vkSurface;
@@ -27,14 +35,11 @@ Window::Window(const std::shared_ptr<VulkanContext> pVkContext)
 		throw std::runtime_error("failed to create window surface!");
 	}
 	surface = vkSurface;
-	debug_write("VK Surface successfully created");
+	logging::DEBUG("SUCCESSFULLY CREATED VK SURFACE");
 }
 
-Window::Window(const std::shared_ptr<VulkanContext> pVkContext, const WindowCreationInfo& windowCreationInfo)
-	: pVkContext(pVkContext) {
-
-	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+Window::Window(const std::shared_ptr<VulkanContext> pVkContext, std::shared_ptr<GLFWContext> pGLFWContext, const WindowCreationInfo& windowCreationInfo)
+	: pVkContext(pVkContext), pGLFWContext(pGLFWContext) {
 
 	handle = glfwCreateWindow(
 		windowCreationInfo.width,
@@ -51,22 +56,35 @@ Window::Window(const std::shared_ptr<VulkanContext> pVkContext, const WindowCrea
 		throw std::runtime_error("failed to create window surface!");
 	}
 	surface = vkSurface;
-	debug_write("VK Surface successfully created");
+	logging::DEBUG("SUCCESSFULLY CREATED VK SURFACE");
 }
 
 Window::~Window() {
-	if (surface != VK_NULL_HANDLE) {
+	if (surface) {
 		VkInstance instance = pVkContext->getInstance();
 		const VkAllocationCallbacks* pAllocationCallbacks = pVkContext->getAllocationCallbacks();
 		vkDestroySurfaceKHR(instance, surface, pAllocationCallbacks);
-		debug_write("VK Surface successfully destroyed");
+		logging::DEBUG("SUCCESSFULLY DESTROYED VK SURFACE");
 	}
 
 	if (handle != VK_NULL_HANDLE) {
 		glfwDestroyWindow(handle);
+		logging::DEBUG("SUCCESSFULLY DESTROYED GLFW WINDOW");
+	}
+}
+
+bool Window::isOpen() const {
+	if (handle == nullptr) {
+		return false;
 	}
 
-	debug_write("GLFW window successfully destroyed");
+	return !(glfwWindowShouldClose(handle));
+}
+
+void Window::close() const {
+	if (handle == nullptr) return;
+
+	glfwSetWindowShouldClose(handle, true);
 }
 
 void Window::mainLoop() {

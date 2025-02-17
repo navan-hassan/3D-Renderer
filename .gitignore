@@ -22,3 +22,6 @@ Thumbs.db
 *.a
 *.so
 *.dll
+
+# Compiled Shaders
+*.spv

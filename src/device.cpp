@@ -1,4 +1,5 @@
 #include <device.hpp>
+#include <logging_utilities.hpp>
 
 #include <set>
 
@@ -59,10 +60,10 @@ LogicalDevice::LogicalDevice(const std::shared_ptr<VulkanContext> pVkContext, co
 
     const VkAllocationCallbacks* pAllocationCallbacks = pVkContext->getAllocationCallbacks();
     if (vkCreateDevice(this->physicalDevice, &createInfo, pAllocationCallbacks, &handle) != VK_SUCCESS) {
-        throw std::runtime_error("failed to create logical device!");
+        throw std::runtime_error("FAILED TO CREATE LOGICAL DEVICE!");
     }
 
-    debug_write("Logical Device successfully created");
+    logging::DEBUG("SUCCESSFULLY CREATED LOGICAL DEVICE");
 
     vkGetDeviceQueue(handle, deviceInterfaceCreationInfo.queueFamilyIndex.graphics.value(), 0, &graphicsQueue);
     vkGetDeviceQueue(handle, deviceInterfaceCreationInfo.queueFamilyIndex.presentation.value(), 0, &presentationQueue);
@@ -73,7 +74,7 @@ LogicalDevice::~LogicalDevice() {
 
     const VkAllocationCallbacks* pAllocationCallbacks = pVkContext->getAllocationCallbacks();
     vkDestroyDevice(handle, pAllocationCallbacks);
-    debug_write("Logical Device successfully destroyed");
+    logging::DEBUG("SUCCESSFULLY DESTROYED LOGICAL DEVICE");
 }
 
 VkPhysicalDevice LogicalDevice::getPhysicalDevice() const {

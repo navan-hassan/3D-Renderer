@@ -1,9 +1,10 @@
 #include <swap_chain.hpp>
+#include <logging_utilities.hpp>
+
+#include <algorithm>
 
 SwapChain::SwapChain(std::shared_ptr<VulkanContext> pVkContext, std::shared_ptr<LogicalDevice> pLogicalDevice)
-	: pVkContext(pVkContext), pLogicalDevice(pLogicalDevice) {
-	
-}
+	: pVkContext(pVkContext), pLogicalDevice(pLogicalDevice) {}
 
 SwapChain::~SwapChain() {
 
@@ -12,13 +13,13 @@ SwapChain::~SwapChain() {
 	for (auto imageView : swapChainImageViews) {
 		vkDestroyImageView(logicaldevice, imageView, pAllocationCallbacks);
 	}
-	debug_write("Successfully destroyed image views");
+	logging::DEBUG("SUCCESSFULLY DESTROYED IMAGE VIEWS");
 
 
 	if (swapChain == VK_NULL_HANDLE) return;
 
 	vkDestroySwapchainKHR(logicaldevice, swapChain, pAllocationCallbacks);
-	debug_write("Successfully destroyed swap chain");
+	logging::DEBUG("SUCCESSFULLY DESTROYED SWAP CHAIN");
 }
 
 VkResult SwapChain::init(const SwapChainCreationInfo& creationInfo) {
@@ -80,7 +81,7 @@ VkResult SwapChain::init(const SwapChainCreationInfo& creationInfo) {
 	VkDevice logicaldevice = pLogicalDevice->getHandle();
 
 	if (vkCreateSwapchainKHR(logicaldevice, &vkSwapChainCreateInfo, pAllocationCallbacks, &swapChain) != VK_SUCCESS) {
-		debug_write("failed to create swap chain!");
+		logging::ERROR("FAILED TO CREATE SWAP CHAIN");
 		return VK_ERROR_INITIALIZATION_FAILED;
 	}
 
@@ -90,7 +91,7 @@ VkResult SwapChain::init(const SwapChainCreationInfo& creationInfo) {
 
 	swapChainImageFormat = surfaceFormat.format;
 
-	debug_write("Successfully created swap chain");
+	logging::DEBUG("SUCCESSFULLY CREATED SWAP CHAIN");
 	createImageViews();
 	return VK_SUCCESS;
 }
@@ -114,10 +115,10 @@ void SwapChain::createImageViews() {
 		createInfo.subresourceRange.baseArrayLayer = 0;
 		createInfo.subresourceRange.layerCount = 1;
 		if (vkCreateImageView(pLogicalDevice->getHandle(), &createInfo, nullptr, &swapChainImageViews[i]) != VK_SUCCESS) {
-			throw std::runtime_error("failed to create image views!");
+			throw std::runtime_error("FAILED TO CREATE IMAGE VIEWS");
 		}
 	}
-	debug_write("Successfully created image views");
+	logging::DEBUG("SUCCESSFULLY CREATED IMAGE VIEWS");
 }
 
 bool SwapChain::hasRequestedPresentMode(const VkPhysicalDevice& physicalDevice, const VkPresentModeKHR& requestedPresentMode, const VkSurfaceKHR& surface) {
