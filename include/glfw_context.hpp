@@ -10,10 +10,10 @@
 
 class GLFWContext {
 public:
-	GLFWContext();
-	~GLFWContext();
-	std::vector<const char*> getRequiredInstanceExtensions() const;
-	static std::shared_ptr<GLFWContext> createSharedInstance();
+    GLFWContext();
+    ~GLFWContext();
+    std::vector<const char*> getRequiredInstanceExtensions() const;
+    static std::shared_ptr<GLFWContext> createSharedInstance();
 };
 
 #endif

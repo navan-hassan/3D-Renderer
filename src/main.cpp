@@ -5,14 +5,14 @@
 
 int main() {
 
-	Engine engine = Engine::Engine();
-	bool enableDebugMode = true;
-	if (engine.init(enableDebugMode) == false) {
-		logging::ERROR("FAILED TO INITIALIZE ENGINE");
-		return EXIT_FAILURE;
-	}
+    Engine engine = Engine::Engine();
+    bool enableDebugMode = true;
+    if (engine.init(enableDebugMode) == false) {
+        logging::ERROR("FAILED TO INITIALIZE ENGINE");
+        return EXIT_FAILURE;
+    }
 
-	engine.eventLoop();
+    engine.eventLoop();
 
-	return EXIT_SUCCESS;
+    return EXIT_SUCCESS;
 }
