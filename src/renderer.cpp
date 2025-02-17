@@ -26,11 +26,10 @@ VkResult Renderer::createDevice() {
     deviceSelectionInfo.deviceType = VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU;
     deviceSelectionInfo.requestedDeviceExtensions.emplace_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
 
-    this->pLogicalDevice = DeviceFactory::Create(pVkContext, deviceSelectionInfo);
-    if (this->pLogicalDevice == VK_NULL_HANDLE) {
+    pLogicalDevice = DeviceFactory::Create(pVkContext, deviceSelectionInfo);
+    if (!pLogicalDevice) {
         logging::ERROR("COULD NOT CREATE LOGICAL DEVICE");
         return VK_ERROR_INITIALIZATION_FAILED;
-        //throw std::runtime_error("ERROR: Failed to create logical device!");
     }
 
     return VK_SUCCESS;
@@ -53,7 +52,6 @@ VkResult Renderer::createSwapChain() {
     if (pSwapChain->init(swapChainCreationInfo) != VK_SUCCESS) {
         return VK_ERROR_INITIALIZATION_FAILED;
     }
-    //pSwapChain->createImageViews();
 
     return VK_SUCCESS;
 }

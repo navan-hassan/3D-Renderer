@@ -15,8 +15,7 @@ SwapChain::~SwapChain() {
     }
     logging::DEBUG("SUCCESSFULLY DESTROYED IMAGE VIEWS");
 
-
-    if (swapChain == VK_NULL_HANDLE) return;
+    if (!swapChain) return;
 
     vkDestroySwapchainKHR(logicaldevice, swapChain, pAllocationCallbacks);
     logging::DEBUG("SUCCESSFULLY DESTROYED SWAP CHAIN");
@@ -28,7 +27,6 @@ VkResult SwapChain::init(const SwapChainCreationInfo& creationInfo) {
     VkSurfaceCapabilitiesKHR surfaceCapabilities;
     std::vector<VkSurfaceFormatKHR> surfaceFormats;
     std::vector<VkPresentModeKHR> presentModes;
-    //VkSurfaceKHR surface = pWindow->getSurface();
     vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice, creationInfo.surface, &surfaceCapabilities);
 
     uint32_t imageCount = surfaceCapabilities.minImageCount + 1;
@@ -43,7 +41,6 @@ VkResult SwapChain::init(const SwapChainCreationInfo& creationInfo) {
     vkSwapChainCreateInfo.minImageCount = imageCount;
 
     VkSurfaceFormatKHR surfaceFormat = selectSurfaceFormat(physicalDevice, creationInfo.surfaceFormat, creationInfo.surface);
-    //FramebufferDimensions framebufferDimensions = pWindow->getFramebufferSize();
     swapChainExtent = setSwapExtent(surfaceCapabilities, static_cast<uint32_t>(creationInfo.framebufferDimensions.width), static_cast<uint32_t>(creationInfo.framebufferDimensions.height), creationInfo.surface, physicalDevice);
 
     vkSwapChainCreateInfo.imageFormat = surfaceFormat.format;

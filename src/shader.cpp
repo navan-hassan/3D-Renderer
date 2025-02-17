@@ -16,7 +16,7 @@ ShaderModule::ShaderModule(VkShaderStageFlagBits shaderStage, const std::vector<
     logging::DEBUG("SUCCESSFULLY CREATED SHADER MODULE");
 }
 ShaderModule::~ShaderModule() {
-    if (shaderModule == VK_NULL_HANDLE) return;
+    if (!shaderModule) return;
 
     VkDevice logicalDevice = pLogicalDevice->getHandle();
     const VkAllocationCallbacks* pAllocationCallbacks = pVkContext->getAllocationCallbacks();
@@ -25,7 +25,7 @@ ShaderModule::~ShaderModule() {
     logging::DEBUG("SUCCESSFULLY DESTROYED SHADER MODULE");
 }
 void ShaderModule::createPipelineStage() {
-    if (shaderModule == VK_NULL_HANDLE) return;
+    if (!shaderModule) return;
 
     shaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
     shaderStageInfo.stage = stage;
@@ -34,7 +34,7 @@ void ShaderModule::createPipelineStage() {
 
 }
 VkShaderModule ShaderModule::getHandle() const {
-    return this->shaderModule;
+    return shaderModule;
 }
 VkPipelineShaderStageCreateInfo ShaderModule::getStageInfo() const {
     return shaderStageInfo;

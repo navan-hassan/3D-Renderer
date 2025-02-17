@@ -12,22 +12,22 @@ VulkanContext::VulkanContext(const VulkanContextInitOptions& initOptions, std::s
 }
 
 VulkanContext::~VulkanContext() {
-    if (this->debugUtilsMessenger != VK_NULL_HANDLE) {
-        this->debugUtilsMessenger->destroy();
+    if (debugUtilsMessenger) {
+        debugUtilsMessenger->destroy();
     }
 
-    if (instance != VK_NULL_HANDLE) {
+    if (instance) {
         vkDestroyInstance(instance, pAllocationCallbacks);
     }
     logging::DEBUG("SUCCESSFULLY DESTROYED VULKAN CONTEXT");
 }
 
 VkInstance VulkanContext::getInstance() const {
-    return this->instance;
+    return instance;
 }
 
 const VkAllocationCallbacks* VulkanContext::getAllocationCallbacks() const {
-    return this->pAllocationCallbacks;
+    return pAllocationCallbacks;
 }
 
 void VulkanContext::createInstance(const VulkanContextInitOptions& initOptions) {
@@ -50,7 +50,6 @@ void VulkanContext::createInstance(const VulkanContextInitOptions& initOptions) 
 
     if (enableValidationLayers) {
         debugCreateInfo = DebugUtilsMessenger::getDebugUtilsMessengerCreateInfo();
-        //DebugUtilsMessenger::populateDebugMessengerCreateInfo(debugCreateInfo);
         instanceCreateInfo.enabledLayerCount = static_cast<uint32_t>(initOptions.validationLayers.size());
         instanceCreateInfo.ppEnabledLayerNames = initOptions.validationLayers.data();
         instanceCreateInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT*)&debugCreateInfo;
@@ -65,7 +64,7 @@ void VulkanContext::createInstance(const VulkanContextInitOptions& initOptions) 
     }
 
     if (enableValidationLayers) {
-        this->debugUtilsMessenger = std::make_unique<DebugUtilsMessenger>(instance, pAllocationCallbacks, debugCreateInfo);
+        debugUtilsMessenger = std::make_unique<DebugUtilsMessenger>(instance, pAllocationCallbacks, debugCreateInfo);
     }
 }
 

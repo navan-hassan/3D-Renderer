@@ -11,7 +11,6 @@ VKAPI_ATTR VkBool32 VKAPI_CALL DebugUtilsMessenger::debugCallback(
     return VK_FALSE;
 }
 
-
 DebugUtilsMessenger::DebugUtilsMessenger() {}
 
 DebugUtilsMessenger::DebugUtilsMessenger(VkInstance instance, const VkAllocationCallbacks* pAllocator, const VkDebugUtilsMessengerCreateInfoEXT& createInfo)

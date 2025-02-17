@@ -70,7 +70,7 @@ LogicalDevice::LogicalDevice(const std::shared_ptr<VulkanContext> pVkContext, co
 }
 
 LogicalDevice::~LogicalDevice() {
-    if (handle == VK_NULL_HANDLE) return;
+    if (!handle) return;
 
     const VkAllocationCallbacks* pAllocationCallbacks = pVkContext->getAllocationCallbacks();
     vkDestroyDevice(handle, pAllocationCallbacks);
